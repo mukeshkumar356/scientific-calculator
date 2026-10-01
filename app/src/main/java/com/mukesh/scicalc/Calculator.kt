@@ -71,29 +71,32 @@ object Calculator {
         }
 
         private fun parseMulDiv(): Double {
-            var left = parsePow()
+            var left = parseUnary()
             while (pos < s.length && (s[pos] == '*' || s[pos] == '/')) {
                 val op = s[pos++]
-                val right = parsePow()
+                val right = parseUnary()
                 left = if (op == '*') left * right else left / right
             }
             return left
         }
 
-        private fun parsePow(): Double {
-            var base = parseUnary()
-            while (pos < s.length && s[pos] == '^') {
-                pos++
-                val exp = parseUnary()
-                base = base.pow(exp)
-            }
-            return base
+        // Unary minus must wrap the whole power expression, not just the
+        // base, so "-2^2" evaluates as -(2^2) = -4 (standard convention),
+        // not (-2)^2 = 4.
+        private fun parseUnary(): Double {
+            if (pos < s.length && s[pos] == '-') { pos++; return -parseUnary() }
+            if (pos < s.length && s[pos] == '+') { pos++; return parseUnary() }
+            return parsePow()
         }
 
-        private fun parseUnary(): Double {
-            if (pos < s.length && s[pos] == '-') { pos++; return -parsePrimary() }
-            if (pos < s.length && s[pos] == '+') { pos++ }
-            return parsePrimary()
+        private fun parsePow(): Double {
+            val base = parsePrimary()
+            if (pos < s.length && s[pos] == '^') {
+                pos++
+                val exp = parseUnary()
+                return base.pow(exp)
+            }
+            return base
         }
 
         private fun parsePrimary(): Double {
