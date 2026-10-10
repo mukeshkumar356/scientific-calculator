@@ -40,7 +40,7 @@ object Calculator {
         "x²" -> current * current
         "x³" -> current * current * current
         "1/x" -> 1.0 / current
-        "x!" -> factorial(current.toInt()).toDouble()
+        "x!" -> factorial(current)
         "eˣ" -> exp(current)
         "10ˣ" -> 10.0.pow(current)
         "2ˣ" -> 2.0.pow(current)
@@ -48,10 +48,13 @@ object Calculator {
         else -> current
     }
 
-    private fun factorial(n: Int): Long {
-        if (n < 0) return 0
-        var result = 1L
-        for (i in 2..n) result *= i
+    // Computed in Double: Long overflows silently from 21! onward. Doubles
+    // stay finite up to 170!. Anything else is rejected so the UI shows
+    // "Error" instead of a wrong number.
+    private fun factorial(v: Double): Double {
+        if (v < 0 || v > 170 || v != floor(v)) throw ArithmeticException("factorial undefined for $v")
+        var result = 1.0
+        for (i in 2..v.toInt()) result *= i
         return result
     }
 
