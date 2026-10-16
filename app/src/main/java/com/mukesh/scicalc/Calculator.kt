@@ -75,10 +75,17 @@ object Calculator {
 
         private fun parseMulDiv(): Double {
             var left = parseUnary()
-            while (pos < s.length && (s[pos] == '*' || s[pos] == '/')) {
+            while (pos < s.length && (s[pos] == '*' || s[pos] == '/' || s[pos] == '%')) {
                 val op = s[pos++]
                 val right = parseUnary()
-                left = if (op == '*') left * right else left / right
+                // '%' is the modulo operator; the UI inserts it as a binary op.
+                // Without handling it here the parser stopped at '%' and
+                // silently dropped the rest, so "7%3" evaluated to 7.
+                left = when (op) {
+                    '*' -> left * right
+                    '/' -> left / right
+                    else -> left % right
+                }
             }
             return left
         }
