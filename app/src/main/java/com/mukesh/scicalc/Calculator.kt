@@ -14,7 +14,7 @@ object Calculator {
             .replace("÷", "/")
             .replace("π", Math.PI.toString())
             .replace("e", Math.E.toString())
-        return eval(e)
+        return requireFinite(eval(e))
     }
 
     private fun eval(expr: String): Double {
@@ -22,7 +22,7 @@ object Calculator {
         return p.parseExpr()
     }
 
-    fun applyFunc(func: String, current: Double): Double = when (func) {
+    fun applyFunc(func: String, current: Double): Double = requireFinite(when (func) {
         "sin" -> sin(toRad(current))
         "cos" -> cos(toRad(current))
         "tan" -> tan(toRad(current))
@@ -46,6 +46,14 @@ object Calculator {
         "2ˣ" -> 2.0.pow(current)
         "abs" -> abs(current)
         else -> current
+    })
+
+    // 1/0, ln(-1), asin(2) etc. produce Infinity/NaN. Formatting those gave
+    // "∞"/"NaN", which was then fed back in as the next expression and parsed
+    // as 0. Reject them so the UI shows "Error" instead.
+    private fun requireFinite(v: Double): Double {
+        if (v.isNaN() || v.isInfinite()) throw ArithmeticException("result is not a finite number")
+        return v
     }
 
     // Computed in Double: Long overflows silently from 21! onward. Doubles
