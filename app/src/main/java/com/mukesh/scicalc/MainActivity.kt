@@ -25,6 +25,19 @@ class MainActivity : AppCompatActivity() {
         setupBasicButtons()
         setupSciButtons()
 
+        // Rotation recreates the activity: restore the display state, and always
+        // derive the DEG/RAD label from Calculator.isDeg (a process-wide
+        // singleton) so the label can't disagree with the active mode.
+        savedInstanceState?.let {
+            expression = it.getString(KEY_EXPRESSION, "")
+            result = it.getString(KEY_RESULT, "")
+            lastWasResult = it.getBoolean(KEY_LAST_WAS_RESULT, false)
+            history.addAll(it.getStringArrayList(KEY_HISTORY) ?: emptyList())
+            b.tvExpression.text = it.getString(KEY_EXPRESSION_TEXT, "")
+            b.tvResult.text = it.getString(KEY_RESULT_TEXT, "0")
+        }
+        b.btnDeg.text = if (Calculator.isDeg) "DEG" else "RAD"
+
         b.btnDeg.setOnClickListener {
             Calculator.isDeg = !Calculator.isDeg
             b.btnDeg.text = if (Calculator.isDeg) "DEG" else "RAD"
@@ -35,6 +48,16 @@ class MainActivity : AppCompatActivity() {
             val msg = history.takeLast(5).joinToString("\n")
             Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_EXPRESSION, expression)
+        outState.putString(KEY_RESULT, result)
+        outState.putBoolean(KEY_LAST_WAS_RESULT, lastWasResult)
+        outState.putStringArrayList(KEY_HISTORY, ArrayList(history))
+        outState.putString(KEY_EXPRESSION_TEXT, b.tvExpression.text.toString())
+        outState.putString(KEY_RESULT_TEXT, b.tvResult.text.toString())
     }
 
     private fun setupBasicButtons() {
@@ -141,5 +164,14 @@ class MainActivity : AppCompatActivity() {
             b.tvExpression.text = expression
             liveResult()
         }
+    }
+
+    private companion object {
+        const val KEY_EXPRESSION = "expression"
+        const val KEY_RESULT = "result"
+        const val KEY_LAST_WAS_RESULT = "lastWasResult"
+        const val KEY_HISTORY = "history"
+        const val KEY_EXPRESSION_TEXT = "expressionText"
+        const val KEY_RESULT_TEXT = "resultText"
     }
 }
