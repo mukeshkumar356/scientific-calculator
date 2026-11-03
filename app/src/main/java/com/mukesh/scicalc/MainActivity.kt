@@ -116,8 +116,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onFunction(func: String) {
-        val cur = if (result.isNotEmpty()) result.toDoubleOrNull() ?: 0.0 else 0.0
         try {
+            // Apply the function to what is on screen: the typed expression
+            // (e.g. "45" then sin), not just the last '=' result, which is
+            // empty until the user evaluates and made sin(45) compute sin(0).
+            val cur = when {
+                expression.isNotEmpty() -> Calculator.compute(expression)
+                result.isNotEmpty() -> result.toDoubleOrNull() ?: 0.0
+                else -> 0.0
+            }
             val r = Calculator.applyFunc(func, cur)
             result = fmt.format(r)
             b.tvResult.text = result
