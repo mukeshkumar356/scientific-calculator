@@ -12,8 +12,8 @@ object Calculator {
         val e = expr.trim()
             .replace("×", "*")
             .replace("÷", "/")
-            .replace("π", Math.PI.toString())
-            .replace("e", Math.E.toString())
+            .replace("π", "(${Math.PI})")
+            .replace("e", "(${Math.E})")
         return requireFinite(eval(e))
     }
 
@@ -83,8 +83,11 @@ object Calculator {
 
         private fun parseMulDiv(): Double {
             var left = parseUnary()
-            while (pos < s.length && (s[pos] == '*' || s[pos] == '/' || s[pos] == '%')) {
-                val op = s[pos++]
+            while (pos < s.length && (s[pos] == '*' || s[pos] == '/' || s[pos] == '%' || startsOperand(s[pos]))) {
+                // Implicit multiplication: "2π" / "3(4)" / "(1+1)2" have no
+                // explicit '*'. Previously π and e were spliced in as bare
+                // digits, so "2π" became the number "23.14159...".
+                val op = if (startsOperand(s[pos])) '*' else s[pos++]
                 val right = parseUnary()
                 // '%' is the modulo operator; the UI inserts it as a binary op.
                 // Without handling it here the parser stopped at '%' and
@@ -106,6 +109,8 @@ object Calculator {
             if (pos < s.length && s[pos] == '+') { pos++; return parseUnary() }
             return parsePow()
         }
+
+        private fun startsOperand(c: Char) = c == '(' || c.isDigit() || c == '.'
 
         private fun parsePow(): Double {
             val base = parsePrimary()
