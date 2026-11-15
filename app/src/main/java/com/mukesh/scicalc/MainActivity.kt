@@ -7,6 +7,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.mukesh.scicalc.databinding.ActivityMainBinding
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,7 +17,11 @@ class MainActivity : AppCompatActivity() {
     private var result = ""
     private var lastWasResult = false
     private val history = mutableListOf<String>()
-    private val fmt = DecimalFormat("0.##########")
+    // Always format with '.' as the decimal separator and ASCII digits. The
+    // formatted result is fed back in as the next expression, and the parser
+    // only understands '.', so a locale like German (0,5) or Arabic/Hindi
+    // digits would otherwise break every follow-up calculation.
+    private val fmt = DecimalFormat("0.##########", DecimalFormatSymbols(Locale.US))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
