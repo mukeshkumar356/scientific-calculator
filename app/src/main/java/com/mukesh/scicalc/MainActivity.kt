@@ -23,6 +23,13 @@ class MainActivity : AppCompatActivity() {
     // digits would otherwise break every follow-up calculation.
     private val fmt = DecimalFormat("0.##########", DecimalFormatSymbols(Locale.US))
 
+    // DecimalFormat renders tiny negatives (e.g. sin(-180°) = -1.2e-16) as
+    // "-0", which then shows on screen and is fed back as the next expression.
+    private fun formatNumber(v: Double): String {
+        val s = fmt.format(v)
+        return if (s == "-0") "0" else s
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityMainBinding.inflate(layoutInflater)
@@ -132,10 +139,10 @@ class MainActivity : AppCompatActivity() {
                 else -> 0.0
             }
             val r = Calculator.applyFunc(func, cur)
-            result = fmt.format(r)
+            result = formatNumber(r)
             b.tvResult.text = result
             expression = result
-            b.tvExpression.text = "$func(${fmt.format(cur)}) ="
+            b.tvExpression.text = "$func(${formatNumber(cur)}) ="
             lastWasResult = true
         } catch (e: Exception) {
             b.tvResult.text = "Error"
@@ -146,7 +153,7 @@ class MainActivity : AppCompatActivity() {
         val expr = expression.ifEmpty { return }
         try {
             val r = Calculator.compute(expr)
-            result = fmt.format(r)
+            result = formatNumber(r)
             history.add("$expr = $result")
             b.tvResult.text = result
             b.tvExpression.text = "$expr ="
@@ -161,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         try {
             if (expression.length > 2) {
                 val r = Calculator.compute(expression)
-                b.tvResult.text = fmt.format(r)
+                b.tvResult.text = formatNumber(r)
             }
         } catch (_: Exception) {}
     }
