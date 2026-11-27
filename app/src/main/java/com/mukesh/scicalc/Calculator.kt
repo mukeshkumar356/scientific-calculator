@@ -19,7 +19,7 @@ object Calculator {
 
     private fun eval(expr: String): Double {
         val p = Parser(expr)
-        return p.parseExpr()
+        return p.parseAll()
     }
 
     fun applyFunc(func: String, current: Double): Double = requireFinite(when (func) {
@@ -70,6 +70,14 @@ object Calculator {
         private var pos = 0
 
         fun parseExpr(): Double = parseAddSub()
+
+        // Reject leftover input (e.g. a stray ')' in "(2+3))*4") instead of
+        // silently dropping everything after it and showing a wrong result.
+        fun parseAll(): Double {
+            val v = parseExpr()
+            if (pos < s.length) throw ArithmeticException("unexpected '${s[pos]}' at $pos")
+            return v
+        }
 
         private fun parseAddSub(): Double {
             var left = parseMulDiv()
@@ -131,7 +139,11 @@ object Calculator {
             }
             val start = pos
             while (pos < s.length && (s[pos].isDigit() || s[pos] == '.' || (s[pos] == 'E' && pos > start))) pos++
-            return if (pos > start) s.substring(start, pos).toDoubleOrNull() ?: 0.0 else 0.0
+            // A missing operand ("5×") or malformed number ("1.2.3") used to be
+            // read as 0, so "5×" evaluated to 0 and "1.2.3" to 0. Show "Error".
+            if (pos == start) throw ArithmeticException("missing operand at $pos")
+            return s.substring(start, pos).toDoubleOrNull()
+                ?: throw ArithmeticException("malformed number '${s.substring(start, pos)}'")
         }
     }
 }
